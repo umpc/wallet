@@ -106,7 +106,7 @@ var UI = (function(UI, $, undefined) {
                 $stack.removeClass("loading");
               });
             });
-          }
+          });
         }
       } catch (error) {
         console.log(error);
