@@ -51,8 +51,13 @@ var UI = (function(UI, $, undefined) {
         }
 
         UI.isDoingPOW = true;
-
-        iota.api.getNewAddress(connection.seed, {"checksum": true}, function(error, newAddress) {
+        for (var securityLevel = 1; securityLevel <= 3; securityLevel++) {
+          var options = {
+            "checksum": true,
+            "security": securityLevel,
+            "returnAll": true
+          };
+          iota.api.getNewAddress(connection.seed, options, function(error, newAddress) {
           $loader.fadeOut();
 
           if (error) {
@@ -87,6 +92,7 @@ var UI = (function(UI, $, undefined) {
             $stack.removeClass("loading");
           });
         });
+        }
       } catch (error) {
         console.log(error);
         UI.formError("generate-address", error);
