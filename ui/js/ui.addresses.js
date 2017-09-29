@@ -51,15 +51,14 @@ var UI = (function(UI, $, undefined) {
         }
 
         UI.isDoingPOW = true;
-        for (var securityLevel = 1; securityLevel <= 1; securityLevel++) {
+        for (var securityLevel = 1; securityLevel <= 3; securityLevel++) {
           var options = {
             "checksum": true,
+            "total": 1,
             "security": securityLevel,
             "returnAll": true
           };
-          iota.api.getNewAddress(connection.seed, options, function(error, newAddress) {
-            $loader.fadeOut();
-
+          iota.api.getNewAddress(connection.seed, options, function(error, maxAddress) {
             if (error) {
               console.log(error);
               UI.formError("generate-address", error);
@@ -67,31 +66,47 @@ var UI = (function(UI, $, undefined) {
               UI.isDoingPOW = false;
               return;
             }
+            options["total"] = 0;
+            iota.api.getNewAddress(connection.seed, options, function(error, newAddress) {
+              $loader.fadeOut();
 
-            if (newAddress != $btn.data("address")) {
-              updateGeneratedAddress(newAddress);
-              $result.css("opacity", 0).css("visibility", "visible").fadeTo("slow", 1);
-            } else {
-              $result.css("visibility", "visible");
-            }
-
-            newAddress = iota.utils.noChecksum(newAddress);
-
-            UI.animateStacks(200);
-
-            iota.api.sendTransfer(connection.seed, connection.depth, connection.minWeightMagnitude, [{"address": newAddress, "value": 0, "message": "", "tag": ""}], function(error, transfers) {
-              UI.isDoingPOW = false;
               if (error) {
+                console.log(error);
                 UI.formError("generate-address", error);
-              } else {
-                $btn.data("address", "");
-                console.log("UI.handleAddressGeneration: Attached to Tangle");
-                UI.formSuccess("generate-address", "address_attached", {"initial": "generate_new_address", "loading": "attaching_to_tangle"});
-                UI.updateState(1000);
+                $stack.removeClass("loading");
+                UI.isDoingPOW = false;
+                return;
               }
-              $stack.removeClass("loading");
+
+              if (newAddress === maxAddress) {
+                return;
+              }
+
+              if (newAddress != $btn.data("address")) {
+                updateGeneratedAddress(newAddress);
+                $result.css("opacity", 0).css("visibility", "visible").fadeTo("slow", 1);
+              } else {
+                $result.css("visibility", "visible");
+              }
+
+              newAddress = iota.utils.noChecksum(newAddress);
+
+              UI.animateStacks(200);
+
+              iota.api.sendTransfer(connection.seed, connection.depth, connection.minWeightMagnitude, [{"address": newAddress, "value": 0, "message": "", "tag": ""}], function(error, transfers) {
+                UI.isDoingPOW = false;
+                if (error) {
+                  UI.formError("generate-address", error);
+                } else {
+                  $btn.data("address", "");
+                  console.log("UI.handleAddressGeneration: Attached to Tangle");
+                  UI.formSuccess("generate-address", "address_attached", {"initial": "generate_new_address", "loading": "attaching_to_tangle"});
+                  UI.updateState(1000);
+                }
+                $stack.removeClass("loading");
+              });
             });
-          });
+          }
         }
       } catch (error) {
         console.log(error);
